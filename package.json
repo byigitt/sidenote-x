@@ -8,11 +8,13 @@
     "test": "node --test",
     "lint": "eslint .",
     "check": "npm run lint && npm test",
+    "smoke": "xvfb-run -a node scripts/smoke.mjs",
     "package": "node scripts/package.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
-    "jsdom": "^27.2.0"
+    "jsdom": "^27.2.0",
+    "playwright": "^1.62.1"
   }
 }

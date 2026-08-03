@@ -138,7 +138,6 @@
     });
     storage.subscribe((storedNotes) => {
       notes = storedNotes;
-      document.querySelector(".sidenote-composer")?.remove();
       schedule();
     });
     new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
