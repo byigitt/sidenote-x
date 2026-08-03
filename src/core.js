@@ -11,6 +11,10 @@
     return String(value ?? "").trim().slice(0, MAX_NOTE_LENGTH);
   }
 
+  function normalizeTimestamp(value, fallback = Date.now()) {
+    return Number.isFinite(value) && Math.abs(value) <= 8.64e15 ? value : fallback;
+  }
+
   function removeNote(notes, handle) {
     const normalizedHandle = normalizeHandle(handle);
     const next = { ...notes };
@@ -29,7 +33,7 @@
       [normalizedHandle]: {
         handle: normalizedHandle,
         text: normalizedText,
-        updatedAt,
+        updatedAt: normalizeTimestamp(updatedAt),
       },
     };
   }
@@ -49,6 +53,7 @@
     MAX_NOTE_LENGTH,
     normalizeHandle,
     normalizeNote,
+    normalizeTimestamp,
     upsertNote,
     removeNote,
     filterNotes,

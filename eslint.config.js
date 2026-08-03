@@ -13,6 +13,7 @@ export default [
         ...globals.browser,
         ...globals.node,
         chrome: "readonly",
+        importScripts: "readonly",
       },
     },
     rules: {

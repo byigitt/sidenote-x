@@ -6,7 +6,7 @@ Sidenote for X is a local-only browser extension.
 
 ## Data it stores
 
-The extension stores X handles, note text, and the note's last-updated timestamp in `chrome.storage.local` inside the current browser profile.
+The extension stores X handles, note text, and the note's last-updated timestamp in `chrome.storage.local` inside the current browser profile. Storage access is restricted to trusted extension contexts, and mutations are serialized by the extension's background worker.
 
 ## Data it does not collect
 
@@ -14,7 +14,9 @@ Sidenote does not collect, transmit, sell, share, or analyze personal data. It h
 
 ## Website access
 
-The extension runs on `x.com` and `twitter.com` only so it can add the private note editor to profiles and display existing notes beside posts. It does not modify, submit, or intercept posts, messages, passwords, cookies, or authentication tokens.
+The extension runs on `x.com` and `twitter.com` only so it can add the private note editor to profiles and display existing notes beside posts. Note text and controls are rendered inside closed Shadow DOM, preventing ordinary host-page JavaScript from querying them. It does not modify, submit, or intercept posts, messages, passwords, cookies, or authentication tokens.
+
+The browser and software with device-level or equivalent extension privileges remain part of the user's trust boundary.
 
 ## Backups and deletion
 

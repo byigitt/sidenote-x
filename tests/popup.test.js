@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { JSDOM } from "jsdom";
+import { readFile } from "node:fs/promises";
 
 await import("../src/core.js");
 await import("../src/popup.js");
@@ -26,6 +27,13 @@ test("renderNotes creates editable cards without interpolating note HTML", () =>
   assert.equal(card.querySelector("a").getAttribute("href"), "https://x.com/ada");
 });
 
+test("renderNotes tolerates legacy records with invalid dates", () => {
+  const document = documentFrom();
+  assert.doesNotThrow(() => globalThis.SidenotePopup.renderNotes(document, [
+    { handle: "ada", text: "safe", updatedAt: 1e100 },
+  ], {}));
+});
+
 test("renderNotes wires save and delete actions", async () => {
   const document = documentFrom();
   const calls = [];
@@ -42,4 +50,14 @@ test("renderNotes wires save and delete actions", async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 
   assert.deepEqual(calls, [["save", "ada", "new"], ["remove", "ada"]]);
+});
+
+test("popup exposes labelled note input and keyboard-operable import button", async () => {
+  const html = await readFile(new URL("../src/popup.html", import.meta.url), "utf8");
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector('label[for="new-text"]').textContent.trim(), "Private note");
+  const importButton = document.querySelector("#import-trigger");
+  assert.equal(importButton.tagName, "BUTTON");
+  assert.equal(importButton.type, "button");
 });

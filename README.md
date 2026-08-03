@@ -20,7 +20,8 @@ Sidenote gives those thoughts a private, persistent place. Over time, your own n
 
 - **Profile notes** — write or update a private note directly below an X profile header.
 - **Feed context** — saved notes appear as restrained annotations on that person's posts.
-- **Local-only storage** — notes use `chrome.storage.local`; no account, analytics, or backend.
+- **Isolated local storage** — notes use extension-only `chrome.storage.local`; all writes are serialized by a background worker.
+- **Closed note surfaces** — profile editors and feed annotations render inside closed Shadow DOM so X page scripts cannot query note text or controls.
 - **Note manager** — search, add, edit, and delete notes from the extension popup.
 - **Portable backups** — export and import a versioned JSON backup.
 - **X and Twitter domains** — works on both `x.com` and `twitter.com`.
@@ -61,6 +62,8 @@ Sidenote requests only:
 
 It contains no trackers, remote scripts, network client, telemetry, or server component. Read the full [privacy policy](PRIVACY.md).
 
+The extension also restricts storage access to trusted extension contexts. X page scripts cannot call the storage layer or inspect the closed note UI. As with any browser extension, the browser itself and other software with equivalent device-level privileges remain part of your trust boundary.
+
 > Browser storage is local to the current browser profile and can be removed when the extension or browser data is cleared. Export a backup if the notes matter to you.
 
 ## Development
@@ -88,6 +91,7 @@ Commands:
 ## Design principles
 
 - Private by default, stated plainly.
+- Keep note text and controls outside the host page's inspectable DOM.
 - Useful context without competing with X's primary interface.
 - Monochrome, sharp, and quiet — no engagement mechanics of its own.
 - Safe DOM rendering: user-authored notes are assigned as text, never interpreted as HTML.

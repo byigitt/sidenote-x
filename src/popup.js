@@ -25,8 +25,10 @@
       link.rel = "noreferrer";
       link.textContent = `@${note.handle}`;
       const time = doc.createElement("time");
-      time.dateTime = new Date(note.updatedAt).toISOString();
-      time.textContent = new Date(note.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const updatedAt = core.normalizeTimestamp(note.updatedAt, 0);
+      const updatedDate = new Date(updatedAt);
+      time.dateTime = updatedDate.toISOString();
+      time.textContent = updatedDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
       head.append(link, time);
 
       const form = doc.createElement("form");
@@ -99,6 +101,7 @@
       downloadBackup(await storage.exportNotes());
       status.textContent = "Backup exported.";
     });
+    document.querySelector("#import-trigger").addEventListener("click", () => document.querySelector("#import").click());
     document.querySelector("#import").addEventListener("change", async (event) => {
       try {
         const file = event.target.files[0];

@@ -17,6 +17,12 @@ test("normalizeNote trims text and limits it to 280 characters", () => {
   assert.equal(normalizeNote(`  ${"a".repeat(300)}  `), "a".repeat(280));
 });
 
+test("normalizeTimestamp rejects dates outside JavaScript's valid range", () => {
+  assert.equal(globalThis.SidenoteCore.normalizeTimestamp(42, 9), 42);
+  assert.equal(globalThis.SidenoteCore.normalizeTimestamp(1e100, 9), 9);
+  assert.equal(globalThis.SidenoteCore.normalizeTimestamp(Number.NaN, 9), 9);
+});
+
 test("upsertNote creates a normalized immutable record", () => {
   const source = {};
   const result = upsertNote(source, "@Ada", "  Trustworthy on compilers. ", 1234);

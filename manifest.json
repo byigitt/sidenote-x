@@ -2,10 +2,13 @@
   "manifest_version": 3,
   "name": "Sidenote for X",
   "short_name": "Sidenote",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Leave private, local notes on X profiles and see them in your feed.",
   "permissions": ["storage"],
   "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
   "icons": {
     "16": "assets/icon-16.png",
     "32": "assets/icon-32.png",
@@ -24,7 +27,6 @@
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
       "js": ["src/core.js", "src/storage.js", "src/content.js"],
-      "css": ["src/content.css"],
       "run_at": "document_idle"
     }
   ]
