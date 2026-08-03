@@ -35,12 +35,10 @@ test("tweetHandle finds a valid profile link inside a post", () => {
   assert.equal(ui.tweetHandle(document.querySelector("article")), "ada");
 });
 
-test("composer keeps note text inside a closed shadow root", async () => {
+test("profile card keeps note text closed and opens an extension-origin editor", async () => {
   loadMarkup();
-  const saves = [];
-  const composer = ui.createComposer(document, "ada", "Compiler expert", async (handle, text) => {
-    saves.push([handle, text]);
-  });
+  const opens = [];
+  const composer = ui.createComposer(document, "ada", "Compiler expert", async (handle) => opens.push(handle));
   document.body.append(composer);
 
   assert.equal(composer.shadowRoot, null);
@@ -48,14 +46,13 @@ test("composer keeps note text inside a closed shadow root", async () => {
   assert.doesNotMatch(document.body.textContent, /Compiler expert/);
 
   const root = ui.shadowRootFor(composer);
-  const textarea = root.querySelector("textarea");
-  assert.equal(textarea.value, "Compiler expert");
+  assert.equal(root.querySelector("textarea"), null);
   assert.match(root.textContent, /Only you can see this/i);
+  assert.match(root.textContent, /Compiler expert/i);
 
-  textarea.value = "Trustworthy on compilers";
-  root.querySelector("form").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+  root.querySelector("button").click();
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.deepEqual(saves, [["ada", "Trustworthy on compilers"]]);
+  assert.deepEqual(opens, ["ada"]);
 });
 
 test("decorateTweet hides notes from the host DOM and refreshes exact text", () => {
@@ -85,5 +82,6 @@ test("renderProfile refreshes the open composer after an external note change", 
   ui.renderProfile(document, { ada: { handle: "ada", text: "new", updatedAt: 2 } }, save);
 
   const composer = document.querySelector(".sidenote-composer");
-  assert.equal(ui.shadowRootFor(composer).querySelector("textarea").value, "new");
+  assert.match(ui.shadowRootFor(composer).textContent, /new/);
+  assert.doesNotMatch(ui.shadowRootFor(composer).textContent, /old/);
 });

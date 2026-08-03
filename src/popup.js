@@ -68,6 +68,22 @@
     URL.revokeObjectURL(url);
   }
 
+  function prefillRequestedEditor(doc, search, notes) {
+    const handle = core.normalizeHandle(new URLSearchParams(search).get("handle"));
+    if (!handle) return false;
+    const text = notes[handle]?.text ?? "";
+    doc.querySelector("#new-handle").value = handle;
+    doc.querySelector("#new-text").value = text;
+    doc.querySelector("#new-note-form button[type=submit]").textContent = text ? "UPDATE NOTE" : "SAVE LOCALLY";
+    doc.querySelector("#new-text").focus();
+    return true;
+  }
+
+  async function closeEditorWindow(windowsApi) {
+    const current = await windowsApi.getCurrent();
+    if (current?.id !== undefined && current.type === "popup") await windowsApi.remove(current.id);
+  }
+
   function start() {
     let notes = {};
     const search = document.querySelector("#search");
@@ -87,15 +103,23 @@
       document.querySelector("#note-total").textContent = `${Object.keys(notes).length} NOTES`;
     };
 
-    storage.getAll().then((stored) => { notes = stored; update(); });
+    storage.getAll().then((stored) => {
+      notes = stored;
+      prefillRequestedEditor(document, window.location.search, notes);
+      update();
+    });
     storage.subscribe((stored) => { notes = stored; update(); });
     search.addEventListener("input", update);
     document.querySelector("#new-note-form").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const data = new FormData(event.currentTarget);
+      const form = event.currentTarget;
+      const data = new FormData(form);
       await storage.save(data.get("handle"), data.get("text"));
-      event.currentTarget.reset();
+      form.reset();
       status.textContent = "Note saved locally.";
+      if (core.normalizeHandle(new URLSearchParams(window.location.search).get("handle"))) {
+        await closeEditorWindow(chrome.windows);
+      }
     });
     document.querySelector("#export").addEventListener("click", async () => {
       downloadBackup(await storage.exportNotes());
@@ -122,6 +146,6 @@
     });
   }
 
-  globalThis.SidenotePopup = Object.freeze({ renderNotes, downloadBackup });
+  globalThis.SidenotePopup = Object.freeze({ renderNotes, downloadBackup, prefillRequestedEditor, closeEditorWindow });
   if (typeof document !== "undefined" && storage) start();
 })();

@@ -13,8 +13,7 @@
     :host { color-scheme: light dark; box-sizing: border-box; color: #0f1419; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     *, *::before, *::after { box-sizing: border-box; }
     @media (prefers-color-scheme: dark) { :host { color: #fff; } }
-    button, textarea { font: inherit; }
-    .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    button { font: inherit; }
   `;
   const COMPOSER_STYLES = `${BASE_STYLES}
     :host { display: block; margin: 16px 0; }
@@ -24,17 +23,15 @@
     .heading div { display: flex; flex-direction: column; gap: 3px; }
     strong { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; }
     .heading div > span { color: rgba(15,20,25,.62); font: 12px/1.4 system-ui, sans-serif; }
-    textarea { width: 100%; min-height: 76px; resize: vertical; margin: 14px 0 10px; padding: 10px 12px; color: inherit; background: rgba(15,20,25,.035); border: 1px solid rgba(15,20,25,.16); border-radius: 2px; font: 14px/1.5 system-ui, sans-serif; }
-    textarea:focus { outline: 2px solid #1d9bf0; outline-offset: 2px; }
-    .actions { display: flex; align-items: center; gap: 10px; min-height: 36px; }
-    .count, .status { color: rgba(15,20,25,.62); font-size: 11px; }
-    .status { margin-left: auto; }
+    .note { margin: 14px 0; color: inherit; font: 14px/1.5 system-ui, sans-serif; overflow-wrap: anywhere; }
+    .note.empty { color: rgba(15,20,25,.5); font-style: italic; }
+    .actions { display: flex; justify-content: flex-end; }
     button { min-height: 36px; padding: 0 14px; color: #fff; background: #0f1419; border: 0; border-radius: 2px; font: 600 11px/1 ui-monospace, monospace; letter-spacing: 1.2px; cursor: pointer; }
     button:disabled { opacity: .5; cursor: wait; }
     @media (prefers-color-scheme: dark) {
       section { background: #1f2228; border-color: rgba(255,255,255,.16); }
-      .mark, .heading div > span, .count, .status { color: rgba(255,255,255,.62); }
-      textarea { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.16); }
+      .mark, .heading div > span { color: rgba(255,255,255,.62); }
+      .note.empty { color: rgba(255,255,255,.5); }
       button { color: #1f2228; background: #fff; }
     }
     @media (max-width: 500px) { :host { margin-inline: 12px; } }
@@ -74,7 +71,7 @@
     return root;
   }
 
-  function createComposer(doc, handle, initialText, onSave) {
+  function createComposer(doc, handle, initialText, onEdit) {
     const host = doc.createElement("div");
     host.className = "sidenote-composer";
     host.dataset.sidenoteHandle = handle;
@@ -85,47 +82,21 @@
         <span class="mark" aria-hidden="true">//</span>
         <div><strong>SIDENOTE</strong><span>Only you can see this</span></div>
       </div>
-      <form>
-        <label class="sr-only" for="sidenote-${handle}">Private note for @${handle}</label>
-        <textarea id="sidenote-${handle}" maxlength="${core.MAX_NOTE_LENGTH}" placeholder="What should future-you remember about @${handle}?"></textarea>
-        <div class="actions">
-          <span class="count" aria-live="polite"></span>
-          <span class="status" role="status"></span>
-          <button type="submit"></button>
-        </div>
-      </form>`;
+      <p class="note"></p>
+      <div class="actions"><button type="button"></button></div>`;
     root.append(card);
 
-    const textarea = root.querySelector("textarea");
-    const count = root.querySelector(".count");
-    const status = root.querySelector(".status");
+    const note = root.querySelector(".note");
     const button = root.querySelector("button");
-    const state = { handle, text: initialText, saving: false };
-    HOST_STATE.set(host, state);
-    textarea.value = initialText;
-    count.textContent = `${initialText.length}/${core.MAX_NOTE_LENGTH}`;
-    button.textContent = initialText ? "UPDATE NOTE" : "SAVE NOTE";
-    textarea.addEventListener("input", () => {
-      count.textContent = `${textarea.value.length}/${core.MAX_NOTE_LENGTH}`;
-      status.textContent = "";
-    });
-    root.querySelector("form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      state.saving = true;
+    HOST_STATE.set(host, { handle, text: initialText });
+    note.textContent = initialText || "No private note yet.";
+    note.classList.toggle("empty", !initialText);
+    button.textContent = initialText ? "EDIT NOTE" : "ADD PRIVATE NOTE";
+    button.addEventListener("click", async () => {
       button.disabled = true;
-      status.textContent = "Saving…";
       try {
-        await onSave(handle, textarea.value);
-        const savedText = core.normalizeNote(textarea.value);
-        state.text = savedText;
-        textarea.value = savedText;
-        count.textContent = `${savedText.length}/${core.MAX_NOTE_LENGTH}`;
-        button.textContent = savedText ? "UPDATE NOTE" : "SAVE NOTE";
-        status.textContent = savedText ? "Saved locally" : "Note removed";
-      } catch {
-        status.textContent = "Could not save";
+        await onEdit(handle);
       } finally {
-        state.saving = false;
         button.disabled = false;
       }
     });
@@ -171,7 +142,7 @@
     }
     const noteText = notes[handle]?.text ?? "";
     const oldState = oldComposer && HOST_STATE.get(oldComposer);
-    if (oldState?.handle === handle && (oldState.saving || oldState.text === noteText)) return;
+    if (oldState?.handle === handle && oldState.text === noteText) return;
     oldComposer?.remove();
     const mount = profileMountPoint(doc);
     if (!mount) return;
@@ -184,7 +155,7 @@
     const render = () => {
       scheduled = false;
       document.querySelectorAll('article[data-testid="tweet"]').forEach((article) => decorateTweet(article, notes));
-      renderProfile(document, notes, (handle, text) => storage.save(handle, text));
+      renderProfile(document, notes, (handle) => storage.openEditor(handle));
     };
     const schedule = () => {
       if (scheduled) return;

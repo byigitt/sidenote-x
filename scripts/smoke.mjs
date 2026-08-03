@@ -1,10 +1,13 @@
 import { chromium } from "playwright";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const userDataDir = path.join(root, ".tmp-chromium-profile");
+const userDataDir = await mkdtemp(path.join(tmpdir(), "sidenote-x-smoke-"));
 const noteText = "Trustworthy on technical history.";
+const updatedNoteText = "Trusted on analytical engines.";
 
 const profileHtml = `<!doctype html><html><head><style>
   body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:600px;margin:auto;min-height:100vh;border-inline:1px solid #2f3336}.cover{height:160px;background:#333639}.profile{padding:16px}.avatar{width:96px;height:96px;border:4px solid #000;border-radius:50%;margin-top:-68px;background:#777}.name{margin-top:14px;font-size:21px;font-weight:700}.handle{color:#71767b}.bio{margin-top:14px}
@@ -25,6 +28,15 @@ async function accessibilityIncludes(page, text) {
   return tree.nodes.some((node) => node.name?.value?.includes(text) || node.value?.value?.includes(text));
 }
 
+async function waitForAccessibility(page, text, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if (await accessibilityIncludes(page, text)) return;
+    await page.waitForTimeout(50);
+  }
+  throw new Error(`Accessible text “${text}” was not found.`);
+}
+
 async function clickAccessibleNode(page, role, name) {
   const session = await page.context().newCDPSession(page);
   const tree = await session.send("Accessibility.getFullAXTree");
@@ -38,13 +50,14 @@ async function clickAccessibleNode(page, role, name) {
   await page.mouse.click(x, y);
 }
 
-const context = await chromium.launchPersistentContext(userDataDir, {
-  headless: false,
-  args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`],
-  viewport: { width: 1100, height: 820 },
-});
-
+let context;
 try {
+  context = await chromium.launchPersistentContext(userDataDir, {
+    headless: false,
+    args: [`--disable-extensions-except=${root}`, `--load-extension=${root}`],
+    viewport: { width: 1100, height: 820 },
+  });
+
   let [worker] = context.serviceWorkers();
   if (!worker) worker = await context.waitForEvent("serviceworker");
   const extensionId = new URL(worker.url()).host;
@@ -60,48 +73,121 @@ try {
   await composer.waitFor({ state: "visible" });
 
   const initialIsolation = await page.evaluate(() => {
+    window.__sidenoteCapturedKeys = [];
+    window.addEventListener("keydown", (event) => window.__sidenoteCapturedKeys.push(event.key), true);
     const host = document.querySelector(".sidenote-composer");
-    return { closed: host.shadowRoot === null, noTextarea: host.querySelector("textarea") === null, noText: !host.textContent.includes("SIDENOTE") };
+    return {
+      closed: host.shadowRoot === null,
+      noControls: host.querySelector("button,textarea,form") === null,
+      noText: host.textContent === "",
+    };
   });
-  assert(initialIsolation.closed && initialIsolation.noTextarea && initialIsolation.noText, "Host page could inspect the closed composer.");
+  assert(initialIsolation.closed && initialIsolation.noControls && initialIsolation.noText, "Host page could inspect the profile card.");
 
-  await clickAccessibleNode(page, "textbox", "Private note for @ada");
-  await page.keyboard.type(noteText);
-  await clickAccessibleNode(page, "button", "SAVE NOTE");
+  await page.evaluate(() => {
+    const probe = document.createElement("input");
+    probe.id = "host-keyboard-probe";
+    document.body.append(probe);
+  });
+  await page.locator("#host-keyboard-probe").click();
+  await page.keyboard.type("probe");
+  assert(
+    (await page.evaluate(() => window.__sidenoteCapturedKeys.join(""))) === "probe",
+    "Hostile keyboard probe was not sensitive to real keydown events.",
+  );
+  await page.evaluate(() => {
+    window.__sidenoteCapturedKeys = [];
+    document.querySelector("#host-keyboard-probe").remove();
+  });
 
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extensionId}/src/popup.html`);
-  const savedCard = popup.locator('[data-handle="ada"]');
-  await savedCard.waitFor();
-  assert(await savedCard.locator("textarea").inputValue() === noteText, "Profile note did not persist through the worker.");
+  const editorPromise = context.waitForEvent("page");
+  await clickAccessibleNode(page, "button", "ADD PRIVATE NOTE");
+  const editor = await editorPromise;
+  await editor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
+  assert(await editor.locator("#new-handle").inputValue() === "ada", "Editor did not prefill the profile handle.");
+  await editor.locator("#new-text").click();
+  await editor.keyboard.type(noteText);
+  const editorErrors = [];
+  editor.on("pageerror", (error) => editorErrors.push(error.message));
+  editor.on("console", (message) => {
+    if (message.type() === "error") editorErrors.push(message.text());
+  });
+  const editorClosed = editor.waitForEvent("close");
+  await editor.locator('#new-note-form button[type="submit"]').click();
+  const closeOutcome = await Promise.race([
+    editorClosed.then(() => "closed"),
+    new Promise((resolve) => setTimeout(() => resolve("open"), 3000)),
+  ]);
+  if (closeOutcome !== "closed") {
+    const diagnostic = {
+      url: editor.url(),
+      status: await editor.locator("#status").textContent(),
+      errors: editorErrors,
+    };
+    throw new Error(`Extension editor did not close: ${JSON.stringify(diagnostic)}`);
+  }
 
-  const hostileAttempt = await page.evaluate(() => {
+  assert((await page.evaluate(() => window.__sidenoteCapturedKeys)).length === 0, "X captured keystrokes typed into the extension editor.");
+  await waitForAccessibility(page, noteText);
+  await waitForAccessibility(page, "EDIT NOTE");
+
+  const hostileAttempt = await page.evaluate((secret) => {
     const host = document.querySelector(".sidenote-composer");
     host.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    return { closed: host.shadowRoot === null, text: host.textContent, textarea: host.querySelector("textarea") };
-  });
-  assert(hostileAttempt.closed && hostileAttempt.text === "" && hostileAttempt.textarea === null, "Host page reached private note controls.");
+    return {
+      closed: host.shadowRoot === null,
+      noSecret: !host.textContent.includes(secret),
+      noControls: host.querySelector("button,textarea,form") === null,
+    };
+  }, noteText);
+  assert(hostileAttempt.closed && hostileAttempt.noSecret && hostileAttempt.noControls, "Host page reached private note content or controls.");
 
-  const raceResponses = await popup.evaluate(async () => Promise.all([
+  const feedPage = await context.newPage();
+  await feedPage.goto("https://x.com/home");
+  await feedPage.locator(".sidenote-feed-note").waitFor({ state: "visible" });
+  await waitForAccessibility(feedPage, noteText);
+
+  const editEditorPromise = context.waitForEvent("page");
+  await clickAccessibleNode(page, "button", "EDIT NOTE");
+  const editEditor = await editEditorPromise;
+  await editEditor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
+  assert(await editEditor.locator("#new-text").inputValue() === noteText, "Edit window did not prefill the existing note.");
+  await editEditor.locator("#new-text").click();
+  await editEditor.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
+  await editEditor.keyboard.type(updatedNoteText);
+  const editClosed = editEditor.waitForEvent("close");
+  await editEditor.locator('#new-note-form button[type="submit"]').click();
+  await editClosed;
+
+  assert((await page.evaluate(() => window.__sidenoteCapturedKeys)).length === 0, "X captured keystrokes typed into the edit window.");
+  await waitForAccessibility(page, updatedNoteText);
+  await waitForAccessibility(feedPage, updatedNoteText);
+  assert(!(await accessibilityIncludes(feedPage, noteText)), "Open feed retained the stale note after an edit.");
+
+  const manager = await context.newPage();
+  await manager.goto(`chrome-extension://${extensionId}/src/popup.html`);
+  const savedCard = manager.locator('[data-handle="ada"]');
+  await savedCard.waitFor();
+  assert(await savedCard.locator("textarea").inputValue() === updatedNoteText, "Edited profile note did not persist through the worker.");
+
+  const raceResponses = await manager.evaluate(async () => Promise.all([
     chrome.runtime.sendMessage({ type: "sidenote:save", handle: "bob", text: "B", updatedAt: 2 }),
     chrome.runtime.sendMessage({ type: "sidenote:save", handle: "eve", text: "E", updatedAt: 3 }),
   ]));
   assert(raceResponses.every((response) => response.ok), "Concurrent worker writes failed.");
-  await popup.reload();
-  await popup.locator('[data-handle="bob"]').waitFor();
-  await popup.locator('[data-handle="eve"]').waitFor();
+  await manager.reload();
+  await manager.locator('[data-handle="bob"]').waitFor();
+  await manager.locator('[data-handle="eve"]').waitFor();
 
-  await page.goto("https://x.com/home");
-  const feedNote = page.locator(".sidenote-feed-note");
-  await feedNote.waitFor({ state: "visible" });
-  const feedIsolation = await page.evaluate((secret) => {
+  const feedIsolation = await feedPage.evaluate((secret) => {
     const host = document.querySelector(".sidenote-feed-note");
     return host.shadowRoot === null && !host.textContent.includes(secret);
-  }, noteText);
+  }, updatedNoteText);
   assert(feedIsolation, "Host page could read the feed annotation.");
-  assert(await accessibilityIncludes(page, noteText), "The private note was not rendered in Chromium's accessibility tree.");
+  assert(await accessibilityIncludes(feedPage, updatedNoteText), "The private note was not rendered in Chromium's accessibility tree.");
 
-  console.log("Extension security smoke passed: closed DOM, serialized writes, profile-to-feed persistence.");
+  console.log("Extension security smoke passed: extension-origin editing, closed DOM, serialized writes, profile-to-feed persistence.");
 } finally {
-  await context.close();
+  if (context) await context.close();
+  await rm(userDataDir, { recursive: true, force: true });
 }

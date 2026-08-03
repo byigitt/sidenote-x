@@ -61,3 +61,32 @@ test("popup exposes labelled note input and keyboard-operable import button", as
   assert.equal(importButton.tagName, "BUTTON");
   assert.equal(importButton.type, "button");
 });
+
+test("profile editor window prefills the requested handle and existing note", async () => {
+  const html = await readFile(new URL("../src/popup.html", import.meta.url), "utf8");
+  const document = new JSDOM(html).window.document;
+
+  const populated = globalThis.SidenotePopup.prefillRequestedEditor(
+    document,
+    "?handle=@Ada",
+    { ada: { handle: "ada", text: "Compiler expert", updatedAt: 1 } },
+  );
+
+  assert.equal(populated, true);
+  assert.equal(document.querySelector("#new-handle").value, "ada");
+  assert.equal(document.querySelector("#new-text").value, "Compiler expert");
+  assert.equal(document.querySelector("#new-note-form button[type=submit]").textContent, "UPDATE NOTE");
+});
+
+test("profile editor closes its Chromium window after saving", async () => {
+  const removed = [];
+  await globalThis.SidenotePopup.closeEditorWindow({
+    getCurrent: async () => ({ id: 9, type: "popup" }),
+    remove: async (id) => removed.push(id),
+  });
+  await globalThis.SidenotePopup.closeEditorWindow({
+    getCurrent: async () => ({ id: 10, type: "normal" }),
+    remove: async (id) => removed.push(id),
+  });
+  assert.deepEqual(removed, [9]);
+});

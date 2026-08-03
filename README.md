@@ -18,10 +18,10 @@ Sidenote gives those thoughts a private, persistent place. Over time, your own n
 
 ## Features
 
-- **Profile notes** — write or update a private note directly below an X profile header.
+- **Profile notes** — add or edit a private note from an extension-owned editor opened by the profile card.
 - **Feed context** — saved notes appear as restrained annotations on that person's posts.
 - **Isolated local storage** — notes use extension-only `chrome.storage.local`; all writes are serialized by a background worker.
-- **Closed note surfaces** — profile editors and feed annotations render inside closed Shadow DOM so X page scripts cannot query note text or controls.
+- **Isolated note surfaces** — saved profile/feed annotations use closed Shadow DOM; note entry happens in an extension-origin window, outside X's page and keyboard event path.
 - **Note manager** — search, add, edit, and delete notes from the extension popup.
 - **Portable backups** — export and import a versioned JSON backup.
 - **X and Twitter domains** — works on both `x.com` and `twitter.com`.
@@ -47,9 +47,10 @@ Sidenote gives those thoughts a private, persistent place. Over time, your own n
 
 1. Open any profile on X.
 2. Find the **SIDENOTE** card below the profile name.
-3. Write what future-you should remember and choose **SAVE NOTE**.
-4. When that account appears in your feed, your note appears beneath the post.
-5. Open the toolbar icon to manage or back up all notes.
+3. Choose **ADD PRIVATE NOTE** or **EDIT NOTE** to open the extension-owned editor.
+4. Write what future-you should remember and choose **SAVE LOCALLY**.
+5. When that account appears in your feed, your note appears beneath the post.
+6. Open the toolbar icon to manage or back up all notes.
 
 Saving an empty note removes it. Notes are capped at 280 characters.
 
@@ -58,11 +59,11 @@ Saving an empty note removes it. Notes are capped at 280 characters.
 Sidenote requests only:
 
 - `storage` — to keep notes locally in your browser profile.
-- Access to `x.com` and `twitter.com` — to place the editor and feed annotations in the page.
+- Access to `x.com` and `twitter.com` — to place the profile card and feed annotations in the page.
 
 It contains no trackers, remote scripts, network client, telemetry, or server component. Read the full [privacy policy](PRIVACY.md).
 
-The extension also restricts storage access to trusted extension contexts. X page scripts cannot call the storage layer or inspect the closed note UI. As with any browser extension, the browser itself and other software with equivalent device-level privileges remain part of your trust boundary.
+The extension also restricts storage access to trusted extension contexts. X page scripts cannot call the storage layer, inspect closed note surfaces, or observe keystrokes entered in the separate extension-origin editor. As with any browser extension, the browser itself and other software with equivalent device-level privileges remain part of your trust boundary.
 
 > Browser storage is local to the current browser profile and can be removed when the extension or browser data is cleared. Export a backup if the notes matter to you.
 

@@ -36,9 +36,11 @@ test("storage client delegates reads and mutations to the extension worker", asy
 
   assert.deepEqual(await storage.getAll(), { ada: { text: "A" } });
   assert.equal(await storage.save("@Ada", "note", 42), "written");
+  assert.equal(await storage.openEditor("Ada"), "written");
   assert.deepEqual(fake.messages, [
     { type: "sidenote:getAll" },
     { type: "sidenote:save", handle: "@Ada", text: "note", updatedAt: 42 },
+    { type: "sidenote:openEditor", handle: "Ada" },
   ]);
 });
 

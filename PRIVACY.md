@@ -14,7 +14,7 @@ Sidenote does not collect, transmit, sell, share, or analyze personal data. It h
 
 ## Website access
 
-The extension runs on `x.com` and `twitter.com` only so it can add the private note editor to profiles and display existing notes beside posts. Note text and controls are rendered inside closed Shadow DOM, preventing ordinary host-page JavaScript from querying them. It does not modify, submit, or intercept posts, messages, passwords, cookies, or authentication tokens.
+The extension runs on `x.com` and `twitter.com` only so it can add a private-note card to profiles and display existing notes beside posts. Saved note surfaces render inside closed Shadow DOM, preventing ordinary host-page JavaScript from querying them. Note entry happens in a separate extension-origin window so X cannot observe its input events. The extension does not modify, submit, or intercept posts, messages, passwords, cookies, or authentication tokens.
 
 The browser and software with device-level or equivalent extension privileges remain part of the user's trust boundary.
 

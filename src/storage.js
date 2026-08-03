@@ -11,6 +11,7 @@
   const clear = () => request({ type: "sidenote:clear" });
   const exportNotes = () => request({ type: "sidenote:export" });
   const importNotes = (payload) => request({ type: "sidenote:import", payload });
+  const openEditor = (handle) => request({ type: "sidenote:openEditor", handle });
 
   function subscribe(callback) {
     const listener = (message) => {
@@ -27,6 +28,7 @@
     clear,
     exportNotes,
     importNotes,
+    openEditor,
     subscribe,
   });
 })();

@@ -22,13 +22,25 @@ const store = globalThis.SidenoteStore.create({
   },
   notify,
 });
-const handle = globalThis.SidenoteWorker.createHandler(store);
+const openEditor = globalThis.SidenoteWorker.createEditorAction({
+  normalizeHandle: globalThis.SidenoteCore.normalizeHandle,
+  getURL: (path) => chrome.runtime.getURL(path),
+  createWindow: (options) => chrome.windows.create(options),
+});
+const handle = globalThis.SidenoteWorker.createHandler(store, { openEditor });
 
-chrome.storage.local.setAccessLevel?.({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
+const storageReady = chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).then(
+  () => ({ ok: true }),
+  (error) => {
+    console.error("Sidenote could not restrict local storage to trusted extension contexts.", error);
+    return { ok: false, error };
+  },
+);
+const gatedHandle = globalThis.SidenoteWorker.gateHandler(handle, storageReady);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "sidenote:changed") return false;
-  handle(message)
+  gatedHandle(message)
     .then((value) => sendResponse({ ok: true, value }))
     .catch((error) => sendResponse({ ok: false, error: error.message }));
   return true;
