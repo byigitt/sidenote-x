@@ -1,0 +1,25 @@
+@media (prefers-color-scheme: dark) {
+  :root { --sidenote-bg: #1f2228; --sidenote-fg: #fff; --sidenote-muted: rgba(255,255,255,.62); --sidenote-border: rgba(255,255,255,.16); --sidenote-surface: rgba(255,255,255,.04); }
+}
+@media (prefers-color-scheme: light) {
+  :root { --sidenote-bg: #f7f7f5; --sidenote-fg: #0f1419; --sidenote-muted: rgba(15,20,25,.62); --sidenote-border: rgba(15,20,25,.16); --sidenote-surface: rgba(15,20,25,.035); }
+}
+.sidenote-composer, .sidenote-feed-note { box-sizing: border-box; color: var(--sidenote-fg); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.sidenote-composer { margin: 16px 0; padding: 16px; background: var(--sidenote-bg); border: 1px solid var(--sidenote-border); border-radius: 2px; }
+.sidenote-heading { display: flex; gap: 10px; align-items: flex-start; }
+.sidenote-mark { color: var(--sidenote-muted); font-size: 18px; line-height: 1; }
+.sidenote-heading div { display: flex; flex-direction: column; gap: 3px; }
+.sidenote-heading strong, .sidenote-feed-note strong { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; }
+.sidenote-heading div > span { color: var(--sidenote-muted); font: 12px/1.4 system-ui, sans-serif; }
+.sidenote-composer textarea { box-sizing: border-box; width: 100%; min-height: 76px; resize: vertical; margin: 14px 0 10px; padding: 10px 12px; color: var(--sidenote-fg); background: var(--sidenote-surface); border: 1px solid var(--sidenote-border); border-radius: 2px; font: 14px/1.5 system-ui, sans-serif; }
+.sidenote-composer textarea:focus { outline: 2px solid #1d9bf0; outline-offset: 2px; }
+.sidenote-actions { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.sidenote-count, .sidenote-status { color: var(--sidenote-muted); font-size: 11px; }
+.sidenote-status { margin-left: auto; }
+.sidenote-actions button { min-height: 36px; padding: 0 14px; color: var(--sidenote-bg); background: var(--sidenote-fg); border: 0; border-radius: 2px; font: 600 11px/1 ui-monospace, monospace; letter-spacing: 1.2px; cursor: pointer; }
+.sidenote-actions button:disabled { opacity: .5; cursor: wait; }
+.sidenote-feed-note { display: grid; grid-template-columns: auto auto 1fr; gap: 7px; align-items: baseline; margin: 10px 16px 2px; padding: 9px 11px; color: var(--sidenote-fg); background: var(--sidenote-surface); border-left: 2px solid var(--sidenote-fg); }
+.sidenote-feed-note > span { color: var(--sidenote-muted); }
+.sidenote-feed-note p { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--sidenote-muted); font: 13px/1.4 system-ui, sans-serif; }
+.sidenote-sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 500px) { .sidenote-composer { margin-inline: 12px; } .sidenote-feed-note { grid-template-columns: auto 1fr; } .sidenote-feed-note p { grid-column: 1 / -1; } }

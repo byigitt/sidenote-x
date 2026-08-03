@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Sidenote for X",
+  "short_name": "Sidenote",
+  "version": "0.1.0",
+  "description": "Leave private, local notes on X profiles and see them in your feed.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
+  "action": {
+    "default_title": "Sidenote for X",
+    "default_popup": "src/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["src/core.js", "src/storage.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
