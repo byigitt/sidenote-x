@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sidenote for X</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="wordmark"><span>//</span> SIDENOTE</div>
+    <span id="note-total" class="total">0 NOTES</span>
+  </header>
+  <main>
+    <section class="intro">
+      <h1>Your private context layer for X.</h1>
+      <p>Notes stay in this browser. They are never posted to X or sent to a server.</p>
+    </section>
+
+    <form id="new-note-form" class="new-note">
+      <label for="new-handle">ADD A NOTE</label>
+      <div class="handle-field"><span>@</span><input id="new-handle" name="handle" maxlength="15" pattern="[A-Za-z0-9_]{1,15}" placeholder="handle" required></div>
+      <textarea id="new-text" name="text" maxlength="280" placeholder="What should future-you remember?" required></textarea>
+      <button type="submit">SAVE LOCALLY</button>
+    </form>
+
+    <div class="toolbar">
+      <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search your notes…" aria-label="Search notes"></label>
+      <button id="export" class="text-button" type="button">EXPORT</button>
+      <label class="text-button import">IMPORT<input id="import" type="file" accept="application/json"></label>
+    </div>
+    <p id="status" class="status" role="status"></p>
+    <section id="note-list" class="note-list" aria-live="polite"></section>
+  </main>
+  <footer>
+    <span>LOCAL-ONLY · NO TRACKING</span>
+    <button id="clear" type="button">CLEAR ALL</button>
+  </footer>
+  <script src="core.js"></script>
+  <script src="storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

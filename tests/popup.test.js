@@ -1,0 +1,45 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
+
+await import("../src/core.js");
+await import("../src/popup.js");
+
+function documentFrom(markup = '<main><div id="note-list"></div></main>') {
+  return new JSDOM(`<!doctype html><body>${markup}</body>`).window.document;
+}
+
+test("renderNotes explains the empty state", () => {
+  const document = documentFrom();
+  globalThis.SidenotePopup.renderNotes(document, [], {});
+  assert.match(document.body.textContent, /No private notes yet/i);
+});
+
+test("renderNotes creates editable cards without interpolating note HTML", () => {
+  const document = documentFrom();
+  const notes = [{ handle: "ada", text: "<b>Compiler expert</b>", updatedAt: 1 }];
+  globalThis.SidenotePopup.renderNotes(document, notes, {});
+
+  const card = document.querySelector("[data-handle='ada']");
+  assert.equal(card.querySelector("textarea").value, "<b>Compiler expert</b>");
+  assert.equal(card.querySelector("b"), null);
+  assert.equal(card.querySelector("a").getAttribute("href"), "https://x.com/ada");
+});
+
+test("renderNotes wires save and delete actions", async () => {
+  const document = documentFrom();
+  const calls = [];
+  const notes = [{ handle: "ada", text: "old", updatedAt: 1 }];
+  globalThis.SidenotePopup.renderNotes(document, notes, {
+    save: async (handle, text) => calls.push(["save", handle, text]),
+    remove: async (handle) => calls.push(["remove", handle]),
+  });
+
+  const card = document.querySelector("[data-handle='ada']");
+  card.querySelector("textarea").value = "new";
+  card.querySelector("form").dispatchEvent(new document.defaultView.Event("submit", { bubbles: true, cancelable: true }));
+  card.querySelector("[data-action='delete']").click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.deepEqual(calls, [["save", "ada", "new"], ["remove", "ada"]]);
+});

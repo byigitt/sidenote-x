@@ -64,7 +64,7 @@
         count.textContent = `${savedText.length}/${core.MAX_NOTE_LENGTH}`;
         button.textContent = savedText ? "UPDATE NOTE" : "SAVE NOTE";
         status.textContent = savedText ? "Saved locally" : "Note removed";
-      } catch (_error) {
+      } catch {
         status.textContent = "Could not save";
       } finally {
         button.disabled = false;
