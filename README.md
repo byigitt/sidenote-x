@@ -76,6 +76,7 @@ npm install
 npm run check
 npx playwright install chromium
 npm run smoke
+npm run visual
 npm run package
 ```
 
@@ -87,6 +88,7 @@ Commands:
 | `npm run lint` | Run ESLint |
 | `npm run check` | Run lint and all unit tests |
 | `npm run smoke` | Load the unpacked extension in real Chromium and verify profile → storage → feed |
+| `npm run visual` | Regenerate desktop and narrow feed-layout evidence under `evidence/` |
 | `npm run package` | Create `dist/sidenote-x-<version>.zip` |
 
 ## Design principles

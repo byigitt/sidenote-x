@@ -7,15 +7,16 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const userDataDir = await mkdtemp(path.join(tmpdir(), "sidenote-x-smoke-"));
 const noteText = "Trustworthy on technical history.";
-const updatedNoteText = "Trusted on analytical engines.";
+const updatedNoteText = "Reliable on technical topics; tends to repost the same AI directory thread.";
+
 
 const profileHtml = `<!doctype html><html><head><style>
   body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:600px;margin:auto;min-height:100vh;border-inline:1px solid #2f3336}.cover{height:160px;background:#333639}.profile{padding:16px}.avatar{width:96px;height:96px;border:4px solid #000;border-radius:50%;margin-top:-68px;background:#777}.name{margin-top:14px;font-size:21px;font-weight:700}.handle{color:#71767b}.bio{margin-top:14px}
 </style></head><body><main class="shell"><div class="cover"></div><div class="profile"><div class="avatar"></div><div data-testid="UserName"><div class="name">Ada Lovelace</div><div class="handle">@ada</div></div><p class="bio">Poetical science, analytical engines, and impossible ideas.</p></div></main></body></html>`;
 
-const feedHtml = `<!doctype html><html><head><style>
-  body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:600px;margin:auto;min-height:100vh;border-inline:1px solid #2f3336}h1{padding:16px;margin:0;border-bottom:1px solid #2f3336;font-size:20px}article{padding:16px;border-bottom:1px solid #2f3336}a{color:inherit;text-decoration:none}.post{margin:10px 0;font-size:17px}
-</style></head><body><main class="shell"><h1>Home</h1><article data-testid="tweet"><div data-testid="User-Name"><a href="/ada"><b>Ada Lovelace</b> <span>@ada</span></a></div><div data-testid="tweetText" class="post">The Analytical Engine weaves algebraic patterns just as the Jacquard loom weaves flowers and leaves.</div></article></main></body></html>`;
+const feedHtml = `<!doctype html><html><head><meta charset="utf-8"><style>
+  *{box-sizing:border-box}body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:min(600px,100%);margin:auto;min-height:100vh;border-inline:1px solid #2f3336}h1{padding:16px;margin:0;border-bottom:1px solid #2f3336;font-size:20px}article{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:12px 16px;border-bottom:1px solid #2f3336}.avatar{width:40px;height:40px;border-radius:50%;background:#536471}.tweet-content{min-width:0}a{color:inherit;text-decoration:none}.handle{color:#71767b}.post{margin:6px 0 10px;font-size:17px;line-height:1.35}.actions{height:28px;margin-top:4px;color:#71767b;font-size:13px}
+</style></head><body><main class="shell"><h1>Home</h1><article data-testid="tweet"><div class="avatar"></div><div class="tweet-content"><div data-testid="User-Name"><a href="/ada"><b>Ada Lovelace</b> <span class="handle">@ada</span></a></div><div data-testid="tweetText" class="post">The Analytical Engine weaves algebraic patterns just as the Jacquard loom weaves flowers and leaves.</div><div role="group" aria-label="Tweet actions" class="actions">Reply · Repost · Like</div></div></article></main></body></html>`;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -163,6 +164,38 @@ try {
   await waitForAccessibility(page, updatedNoteText);
   await waitForAccessibility(feedPage, updatedNoteText);
   assert(!(await accessibilityIncludes(feedPage, noteText)), "Open feed retained the stale note after an edit.");
+
+  const desktopLayout = await feedPage.evaluate(() => {
+    const host = document.querySelector(".sidenote-feed-note");
+    const content = document.querySelector(".tweet-content");
+    const hostBox = host.getBoundingClientRect();
+    const contentBox = content.getBoundingClientRect();
+    return {
+      parentClass: host.parentElement.className,
+      widthDelta: Math.abs(hostBox.width - contentBox.width),
+      leftDelta: Math.abs(hostBox.left - contentBox.left),
+      height: hostBox.height,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  assert(desktopLayout.parentClass === "tweet-content", "Feed note escaped X's tweet content column.");
+  assert(desktopLayout.widthDelta <= 1 && desktopLayout.leftDelta <= 1, "Feed note did not fill and align with the tweet content column.");
+  assert(desktopLayout.height <= 96 && desktopLayout.overflow <= 0, "Feed note wrapped into an oversized or overflowing desktop card.");
+
+  await feedPage.setViewportSize({ width: 420, height: 760 });
+  const narrowLayout = await feedPage.evaluate(() => {
+    const host = document.querySelector(".sidenote-feed-note");
+    const content = document.querySelector(".tweet-content");
+    const hostBox = host.getBoundingClientRect();
+    const contentBox = content.getBoundingClientRect();
+    return {
+      widthDelta: Math.abs(hostBox.width - contentBox.width),
+      height: hostBox.height,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  assert(narrowLayout.widthDelta <= 1, "Feed note lost its content-column width on a narrow viewport.");
+  assert(narrowLayout.height <= 120 && narrowLayout.overflow <= 0, "Feed note overflowed or stacked into a vertical strip on a narrow viewport.");
 
   const manager = await context.newPage();
   await manager.goto(`chrome-extension://${extensionId}/src/popup.html`);

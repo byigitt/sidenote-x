@@ -74,6 +74,69 @@ test("decorateTweet hides notes from the host DOM and refreshes exact text", () 
   assert.doesNotMatch(ui.shadowRootFor(annotation).textContent, /Long compiler/);
 });
 
+test("decorateTweet mounts the note inside X's content column before the action row", () => {
+  loadMarkup(`
+    <article data-testid="tweet">
+      <div class="tweet-content">
+        <div data-testid="User-Name"><a href="/ada"><span>@ada</span></a></div>
+        <div data-testid="tweetText">hello</div>
+        <div role="group" aria-label="Tweet actions"></div>
+      </div>
+    </article>
+  `);
+  const article = document.querySelector("article");
+
+  ui.decorateTweet(article, { ada: { handle: "ada", text: "Readable note", updatedAt: 1 } });
+
+  const annotation = article.querySelector(".sidenote-feed-note");
+  assert.equal(annotation.parentElement.className, "tweet-content");
+  assert.equal(annotation.nextElementSibling.getAttribute("role"), "group");
+});
+
+test("decorateTweet ignores quoted content and keeps thread notes in their own articles", () => {
+  loadMarkup(`
+    <article data-testid="tweet" id="outer">
+      <div class="tweet-content">
+        <div data-testid="User-Name"><a href="/ada"><span>@ada</span></a></div>
+        <div data-testid="tweetText">outer post</div>
+        <div role="link" class="quoted-tweet">
+          <div data-testid="User-Name"><a href="/grace"><span>@grace</span></a></div>
+          <div data-testid="tweetText">quoted post</div>
+          <div role="group" aria-label="Quoted actions"></div>
+        </div>
+        <div class="action-wrapper"><div role="group" aria-label="Tweet actions"></div></div>
+      </div>
+    </article>
+    <article data-testid="tweet" id="reply">
+      <div class="tweet-content">
+        <div data-testid="User-Name"><a href="/linus"><span>@linus</span></a></div>
+        <div data-testid="tweetText">reply</div>
+        <div class="action-wrapper"><div role="group" aria-label="Tweet actions"></div></div>
+      </div>
+    </article>
+  `);
+  const notes = {
+    ada: { handle: "ada", text: "outer note", updatedAt: 1 },
+    grace: { handle: "grace", text: "quoted note", updatedAt: 1 },
+    linus: { handle: "linus", text: "reply note", updatedAt: 1 },
+  };
+  const outer = document.querySelector("#outer");
+  const reply = document.querySelector("#reply");
+
+  ui.decorateTweet(outer, notes);
+  ui.decorateTweet(reply, notes);
+
+  const outerAnnotation = outer.querySelector(".sidenote-feed-note");
+  const replyAnnotation = reply.querySelector(".sidenote-feed-note");
+  assert.equal(outerAnnotation.parentElement.className, "action-wrapper");
+  assert.equal(outerAnnotation.nextElementSibling.getAttribute("aria-label"), "Tweet actions");
+  assert.match(ui.shadowRootFor(outerAnnotation).textContent, /outer note/);
+  assert.doesNotMatch(ui.shadowRootFor(outerAnnotation).textContent, /quoted note/);
+  assert.equal(replyAnnotation.closest("article"), reply);
+  assert.match(ui.shadowRootFor(replyAnnotation).textContent, /reply note/);
+  assert.equal(document.querySelectorAll(".sidenote-feed-note").length, 2);
+});
+
 test("renderProfile refreshes the open composer after an external note change", () => {
   loadMarkup('<main><div data-testid="UserName">@ada</div></main>', "https://x.com/ada");
   const save = async () => {};

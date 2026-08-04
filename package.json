@@ -1,6 +1,6 @@
 {
   "name": "sidenote-x",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "description": "Private, local notes for people you encounter on X.",
@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "check": "npm run lint && npm test",
     "smoke": "xvfb-run -a node scripts/smoke.mjs",
+    "visual": "node scripts/visual.mjs",
     "package": "node scripts/package.mjs"
   },
   "devDependencies": {

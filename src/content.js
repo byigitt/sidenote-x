@@ -37,13 +37,17 @@
     @media (max-width: 500px) { :host { margin-inline: 12px; } }
   `;
   const FEED_STYLES = `${BASE_STYLES}
-    :host { display: block; margin: 10px 16px 2px; }
-    aside { display: grid; grid-template-columns: auto auto 1fr; gap: 7px; align-items: baseline; padding: 9px 11px; background: rgba(15,20,25,.035); border-left: 2px solid currentColor; }
-    span { color: rgba(15,20,25,.62); }
-    strong { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; }
-    p { min-width: 0; margin: 0; overflow-wrap: anywhere; color: rgba(15,20,25,.62); font: 13px/1.4 system-ui, sans-serif; }
-    @media (prefers-color-scheme: dark) { aside { background: rgba(255,255,255,.04); } span, p { color: rgba(255,255,255,.62); } }
-    @media (max-width: 500px) { aside { grid-template-columns: auto 1fr; } p { grid-column: 1 / -1; } }
+    :host { display: block; width: 100%; min-width: 0; margin: 10px 0 6px; }
+    aside { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; width: 100%; min-width: 0; padding: 9px 12px; background: rgba(15,20,25,.035); border: 1px solid rgba(15,20,25,.09); border-radius: 10px; }
+    .label { display: inline-flex; flex: 0 0 auto; gap: 6px; align-items: baseline; color: rgba(15,20,25,.56); white-space: nowrap; }
+    .mark { font-size: 11px; letter-spacing: -1px; }
+    strong { font-size: 10px; font-weight: 600; letter-spacing: 1.15px; }
+    p { flex: 1 1 220px; min-width: 0; margin: 0; overflow-wrap: break-word; color: rgba(15,20,25,.78); font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    @media (prefers-color-scheme: dark) {
+      aside { background: rgba(239,243,244,.055); border-color: rgba(239,243,244,.10); }
+      .label { color: rgba(239,243,244,.52); }
+      p { color: rgba(239,243,244,.78); }
+    }
   `;
 
   function profileHandleFromPath(path) {
@@ -103,8 +107,20 @@
     return host;
   }
 
+  function feedMountPoint(article) {
+    const actionRow = [...article.querySelectorAll('[role="group"]')]
+      .reverse()
+      .find((element) => element.closest("article") === article);
+    if (actionRow?.parentElement) return { parent: actionRow.parentElement, before: actionRow };
+
+    const tweetText = article.querySelector('[data-testid="tweetText"]');
+    if (tweetText?.parentElement) return { parent: tweetText.parentElement, before: tweetText.nextSibling };
+    return { parent: article, before: null };
+  }
+
   function decorateTweet(article, notes) {
-    const existing = article.querySelector(":scope > .sidenote-feed-note");
+    const existing = [...article.querySelectorAll(".sidenote-feed-note")]
+      .find((element) => element.closest("article") === article);
     const handle = tweetHandle(article);
     const note = notes[handle];
     if (!note) {
@@ -120,12 +136,13 @@
     const root = attachClosedRoot(host, FEED_STYLES);
     const annotation = document.createElement("aside");
     annotation.setAttribute("aria-label", `Your private note about @${handle}`);
-    annotation.innerHTML = '<span aria-hidden="true">//</span><strong>YOUR NOTE</strong><p></p>';
+    annotation.innerHTML = '<span class="label"><span class="mark" aria-hidden="true">//</span><strong>SIDENOTE</strong></span><p></p>';
     annotation.querySelector("p").textContent = note.text;
     root.append(annotation);
     HOST_STATE.set(host, { handle, text: note.text });
     existing?.remove();
-    article.append(host);
+    const mount = feedMountPoint(article);
+    mount.parent.insertBefore(host, mount.before);
   }
 
   function profileMountPoint(doc) {
