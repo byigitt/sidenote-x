@@ -41,11 +41,11 @@
       const remove = doc.createElement("button");
       remove.type = "button";
       remove.dataset.action = "delete";
-      remove.textContent = "DELETE";
+      remove.textContent = "Delete";
       const save = doc.createElement("button");
       save.type = "submit";
       save.dataset.action = "save";
-      save.textContent = "SAVE";
+      save.textContent = "Save";
       actions.append(remove, save);
       form.append(textarea, actions);
       form.addEventListener("submit", async (event) => {
@@ -74,7 +74,7 @@
     const text = notes[handle]?.text ?? "";
     doc.querySelector("#new-handle").value = handle;
     doc.querySelector("#new-text").value = text;
-    doc.querySelector("#new-note-form button[type=submit]").textContent = text ? "UPDATE NOTE" : "SAVE LOCALLY";
+    doc.querySelector("#new-note-form button[type=submit]").textContent = text ? "Update note" : "Save note";
     doc.querySelector("#new-text").focus();
     return true;
   }
@@ -100,7 +100,8 @@
           status.textContent = `Removed @${handle}.`;
         },
       });
-      document.querySelector("#note-total").textContent = `${Object.keys(notes).length} NOTES`;
+      const count = Object.keys(notes).length;
+      document.querySelector("#note-total").textContent = `${count} ${count === 1 ? "note" : "notes"}`;
     };
 
     storage.getAll().then((stored) => {

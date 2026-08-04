@@ -16,37 +16,37 @@
     button { font: inherit; }
   `;
   const COMPOSER_STYLES = `${BASE_STYLES}
-    :host { display: block; margin: 16px 0; }
-    section { padding: 16px; background: #f7f7f5; border: 1px solid rgba(15,20,25,.16); border-radius: 2px; }
-    .heading { display: flex; gap: 10px; align-items: flex-start; }
-    .mark { color: rgba(15,20,25,.62); font-size: 18px; line-height: 1; }
-    .heading div { display: flex; flex-direction: column; gap: 3px; }
-    strong { font-size: 11px; font-weight: 600; letter-spacing: 1.4px; }
-    .heading div > span { color: rgba(15,20,25,.62); font: 12px/1.4 system-ui, sans-serif; }
-    .note { margin: 14px 0; color: inherit; font: 14px/1.5 system-ui, sans-serif; overflow-wrap: anywhere; }
-    .note.empty { color: rgba(15,20,25,.5); font-style: italic; }
+    :host { display: block; margin: 14px 0; font-family: TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    section { padding: 12px; color: #0f1419; background: #f7f9f9; border: 1px solid #cfd9de; border-radius: 12px; }
+    .heading { display: flex; gap: 8px; align-items: flex-start; }
+    svg { flex: 0 0 18px; width: 18px; height: 18px; color: #536471; }
+    .heading div { display: flex; flex-direction: column; gap: 1px; }
+    strong { font-size: 15px; font-weight: 700; line-height: 18px; }
+    .heading div > span { color: #536471; font-size: 13px; line-height: 17px; }
+    .note { margin: 10px 0 12px 26px; color: inherit; font-size: 14px; line-height: 19px; overflow-wrap: anywhere; }
+    .note.empty { color: #536471; }
     .actions { display: flex; justify-content: flex-end; }
-    button { min-height: 36px; padding: 0 14px; color: #fff; background: #0f1419; border: 0; border-radius: 2px; font: 600 11px/1 ui-monospace, monospace; letter-spacing: 1.2px; cursor: pointer; }
+    button { min-height: 34px; padding: 0 16px; color: #fff; background: #0f1419; border: 0; border-radius: 9999px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    button:hover { background: #272c30; }
     button:disabled { opacity: .5; cursor: wait; }
     @media (prefers-color-scheme: dark) {
-      section { background: #1f2228; border-color: rgba(255,255,255,.16); }
-      .mark, .heading div > span { color: rgba(255,255,255,.62); }
-      .note.empty { color: rgba(255,255,255,.5); }
-      button { color: #1f2228; background: #fff; }
+      section { color: #e7e9ea; background: #16181c; border-color: #2f3336; }
+      svg, .heading div > span, .note.empty { color: #71767b; }
+      button { color: #0f1419; background: #eff3f4; }
+      button:hover { background: #d7dbdc; }
     }
     @media (max-width: 500px) { :host { margin-inline: 12px; } }
   `;
   const FEED_STYLES = `${BASE_STYLES}
-    :host { display: block; width: 100%; min-width: 0; margin: 10px 0 6px; }
-    aside { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; width: 100%; min-width: 0; padding: 9px 12px; background: rgba(15,20,25,.035); border: 1px solid rgba(15,20,25,.09); border-radius: 10px; }
-    .label { display: inline-flex; flex: 0 0 auto; gap: 6px; align-items: baseline; color: rgba(15,20,25,.56); white-space: nowrap; }
-    .mark { font-size: 11px; letter-spacing: -1px; }
-    strong { font-size: 10px; font-weight: 600; letter-spacing: 1.15px; }
-    p { flex: 1 1 220px; min-width: 0; margin: 0; overflow-wrap: break-word; color: rgba(15,20,25,.78); font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    :host { display: block; width: 100%; min-width: 0; margin: 8px 0 4px; font-family: TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    aside { display: flex; gap: 8px; align-items: flex-start; width: 100%; min-width: 0; padding: 9px 11px; color: #0f1419; background: #f7f9f9; border: 1px solid #cfd9de; border-radius: 12px; }
+    svg { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 1px; color: #536471; }
+    p { min-width: 0; margin: 0; overflow-wrap: anywhere; color: inherit; font-size: 14px; font-weight: 400; line-height: 18px; }
+    strong { font-weight: 700; }
+    .separator { color: #536471; }
     @media (prefers-color-scheme: dark) {
-      aside { background: rgba(239,243,244,.055); border-color: rgba(239,243,244,.10); }
-      .label { color: rgba(239,243,244,.52); }
-      p { color: rgba(239,243,244,.78); }
+      aside { color: #e7e9ea; background: #16181c; border-color: #2f3336; }
+      svg, .separator { color: #71767b; }
     }
   `;
 
@@ -83,8 +83,8 @@
     const card = doc.createElement("section");
     card.innerHTML = `
       <div class="heading">
-        <span class="mark" aria-hidden="true">//</span>
-        <div><strong>SIDENOTE</strong><span>Only you can see this</span></div>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.75 3.75h10.5a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2H6.75a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        <div><strong>Your private note</strong><span>Only you can see this</span></div>
       </div>
       <p class="note"></p>
       <div class="actions"><button type="button"></button></div>`;
@@ -95,7 +95,7 @@
     HOST_STATE.set(host, { handle, text: initialText });
     note.textContent = initialText || "No private note yet.";
     note.classList.toggle("empty", !initialText);
-    button.textContent = initialText ? "EDIT NOTE" : "ADD PRIVATE NOTE";
+    button.textContent = initialText ? "Edit note" : "Add note";
     button.addEventListener("click", async () => {
       button.disabled = true;
       try {
@@ -107,13 +107,31 @@
     return host;
   }
 
+  function commonAncestor(first, second, boundary) {
+    const ancestors = new Set();
+    for (let node = first; node && node !== boundary; node = node.parentElement) ancestors.add(node);
+    for (let node = second; node && node !== boundary; node = node.parentElement) {
+      if (ancestors.has(node)) return node;
+    }
+    return null;
+  }
+
+  function childWithin(parent, descendant) {
+    let child = descendant;
+    while (child?.parentElement && child.parentElement !== parent) child = child.parentElement;
+    return child?.parentElement === parent ? child : null;
+  }
+
   function feedMountPoint(article) {
     const actionRow = [...article.querySelectorAll('[role="group"]')]
       .reverse()
       .find((element) => element.closest("article") === article);
-    if (actionRow?.parentElement) return { parent: actionRow.parentElement, before: actionRow };
-
-    const tweetText = article.querySelector('[data-testid="tweetText"]');
+    const tweetText = [...article.querySelectorAll('[data-testid="tweetText"]')]
+      .find((element) => element.closest("article") === article && !element.closest('[role="link"]'))
+      ?? article.querySelector('[data-testid="tweetText"]');
+    const contentColumn = actionRow && tweetText && commonAncestor(tweetText, actionRow, article);
+    const actionBranch = contentColumn && childWithin(contentColumn, actionRow);
+    if (contentColumn && actionBranch) return { parent: contentColumn, before: actionBranch };
     if (tweetText?.parentElement) return { parent: tweetText.parentElement, before: tweetText.nextSibling };
     return { parent: article, before: null };
   }
@@ -136,8 +154,8 @@
     const root = attachClosedRoot(host, FEED_STYLES);
     const annotation = document.createElement("aside");
     annotation.setAttribute("aria-label", `Your private note about @${handle}`);
-    annotation.innerHTML = '<span class="label"><span class="mark" aria-hidden="true">//</span><strong>SIDENOTE</strong></span><p></p>';
-    annotation.querySelector("p").textContent = note.text;
+    annotation.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.75 3.75h10.5a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2H6.75a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><p><strong>Your note</strong><span class="separator" aria-hidden="true"> · </span><span class="text"></span></p>';
+    annotation.querySelector(".text").textContent = note.text;
     root.append(annotation);
     HOST_STATE.set(host, { handle, text: note.text });
     existing?.remove();

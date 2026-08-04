@@ -15,8 +15,8 @@ const profileHtml = `<!doctype html><html><head><style>
 </style></head><body><main class="shell"><div class="cover"></div><div class="profile"><div class="avatar"></div><div data-testid="UserName"><div class="name">Ada Lovelace</div><div class="handle">@ada</div></div><p class="bio">Poetical science, analytical engines, and impossible ideas.</p></div></main></body></html>`;
 
 const feedHtml = `<!doctype html><html><head><meta charset="utf-8"><style>
-  *{box-sizing:border-box}body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:min(600px,100%);margin:auto;min-height:100vh;border-inline:1px solid #2f3336}h1{padding:16px;margin:0;border-bottom:1px solid #2f3336;font-size:20px}article{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:12px 16px;border-bottom:1px solid #2f3336}.avatar{width:40px;height:40px;border-radius:50%;background:#536471}.tweet-content{min-width:0}a{color:inherit;text-decoration:none}.handle{color:#71767b}.post{margin:6px 0 10px;font-size:17px;line-height:1.35}.actions{height:28px;margin-top:4px;color:#71767b;font-size:13px}
-</style></head><body><main class="shell"><h1>Home</h1><article data-testid="tweet"><div class="avatar"></div><div class="tweet-content"><div data-testid="User-Name"><a href="/ada"><b>Ada Lovelace</b> <span class="handle">@ada</span></a></div><div data-testid="tweetText" class="post">The Analytical Engine weaves algebraic patterns just as the Jacquard loom weaves flowers and leaves.</div><div role="group" aria-label="Tweet actions" class="actions">Reply · Repost · Like</div></div></article></main></body></html>`;
+  *{box-sizing:border-box}body{margin:0;background:#000;color:#e7e9ea;font:15px Arial,sans-serif}.shell{width:min(600px,100%);margin:auto;min-height:100vh;border-inline:1px solid #2f3336}h1{padding:16px;margin:0;border-bottom:1px solid #2f3336;font-size:20px}article{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;padding:12px 16px;border-bottom:1px solid #2f3336}.avatar{width:40px;height:40px;border-radius:50%;background:#536471}.tweet-content{min-width:0}a{color:inherit;text-decoration:none}.handle{color:#71767b}.post{margin:6px 0 10px;font-size:17px;line-height:1.35}.action-wrapper{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-width:0}.actions{grid-column:1/-1;height:28px;margin-top:4px;color:#71767b;font-size:13px}
+</style></head><body><main class="shell"><h1>Home</h1><article data-testid="tweet"><div class="avatar"></div><div class="tweet-content"><div data-testid="User-Name"><a href="/ada"><b>Ada Lovelace</b> <span class="handle">@ada</span></a></div><div data-testid="tweetText" class="post">The Analytical Engine weaves algebraic patterns just as the Jacquard loom weaves flowers and leaves.</div><div class="action-wrapper"><div role="group" aria-label="Tweet actions" class="actions">Reply · Repost · Like</div></div></div></article></main></body></html>`;
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -102,7 +102,7 @@ try {
   });
 
   const editorPromise = context.waitForEvent("page");
-  await clickAccessibleNode(page, "button", "ADD PRIVATE NOTE");
+  await clickAccessibleNode(page, "button", "Add note");
   const editor = await editorPromise;
   await editor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
   assert(await editor.locator("#new-handle").inputValue() === "ada", "Editor did not prefill the profile handle.");
@@ -130,7 +130,7 @@ try {
 
   assert((await page.evaluate(() => window.__sidenoteCapturedKeys)).length === 0, "X captured keystrokes typed into the extension editor.");
   await waitForAccessibility(page, noteText);
-  await waitForAccessibility(page, "EDIT NOTE");
+  await waitForAccessibility(page, "Edit note");
 
   const hostileAttempt = await page.evaluate((secret) => {
     const host = document.querySelector(".sidenote-composer");
@@ -149,7 +149,7 @@ try {
   await waitForAccessibility(feedPage, noteText);
 
   const editEditorPromise = context.waitForEvent("page");
-  await clickAccessibleNode(page, "button", "EDIT NOTE");
+  await clickAccessibleNode(page, "button", "Edit note");
   const editEditor = await editEditorPromise;
   await editEditor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
   assert(await editEditor.locator("#new-text").inputValue() === noteText, "Edit window did not prefill the existing note.");
@@ -172,6 +172,7 @@ try {
     const contentBox = content.getBoundingClientRect();
     return {
       parentClass: host.parentElement.className,
+      nextClass: host.nextElementSibling?.className,
       widthDelta: Math.abs(hostBox.width - contentBox.width),
       leftDelta: Math.abs(hostBox.left - contentBox.left),
       height: hostBox.height,
@@ -179,6 +180,7 @@ try {
     };
   });
   assert(desktopLayout.parentClass === "tweet-content", "Feed note escaped X's tweet content column.");
+  assert(desktopLayout.nextClass === "action-wrapper", "Feed note was inserted inside X's action grid instead of before it.");
   assert(desktopLayout.widthDelta <= 1 && desktopLayout.leftDelta <= 1, "Feed note did not fill and align with the tweet content column.");
   assert(desktopLayout.height <= 96 && desktopLayout.overflow <= 0, "Feed note wrapped into an oversized or overflowing desktop card.");
 

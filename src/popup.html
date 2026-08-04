@@ -8,35 +8,35 @@
 </head>
 <body>
   <header>
-    <div class="wordmark"><span>//</span> SIDENOTE</div>
-    <span id="note-total" class="total">0 NOTES</span>
+    <div class="wordmark">Sidenote</div>
+    <span id="note-total" class="total">0 notes</span>
   </header>
   <main>
     <section class="intro">
-      <h1>Your private context layer for X.</h1>
+      <h1>Your notes on X</h1>
       <p>Notes stay in this browser. They are never posted to X or sent to a server.</p>
     </section>
 
     <form id="new-note-form" class="new-note">
-      <label for="new-handle">ADD A NOTE</label>
+      <label for="new-handle">Add a note</label>
       <div class="handle-field"><span>@</span><input id="new-handle" name="handle" maxlength="15" pattern="[A-Za-z0-9_]{1,15}" placeholder="handle" required></div>
       <label class="sr-only" for="new-text">Private note</label>
       <textarea id="new-text" name="text" maxlength="280" placeholder="What should future-you remember?" required></textarea>
-      <button type="submit">SAVE LOCALLY</button>
+      <button type="submit">Save note</button>
     </form>
 
     <div class="toolbar">
       <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search your notes…" aria-label="Search notes"></label>
-      <button id="export" class="text-button" type="button">EXPORT</button>
-      <button id="import-trigger" class="text-button" type="button">IMPORT</button>
+      <button id="export" class="text-button" type="button">Export</button>
+      <button id="import-trigger" class="text-button" type="button">Import</button>
       <input id="import" class="file-input" type="file" accept="application/json" aria-label="Import Sidenote backup">
     </div>
     <p id="status" class="status" role="status"></p>
     <section id="note-list" class="note-list" aria-live="polite"></section>
   </main>
   <footer>
-    <span>LOCAL-ONLY · NO TRACKING</span>
-    <button id="clear" type="button">CLEAR ALL</button>
+    <span>Local only · No tracking</span>
+    <button id="clear" type="button">Clear all</button>
   </footer>
   <script src="core.js"></script>
   <script src="storage.js"></script>

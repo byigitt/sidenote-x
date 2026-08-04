@@ -62,6 +62,20 @@ test("popup exposes labelled note input and keyboard-operable import button", as
   assert.equal(importButton.type, "button");
 });
 
+test("popup uses X-native typography and controls instead of terminal styling", async () => {
+  const [html, css] = await Promise.all([
+    readFile(new URL("../src/popup.html", import.meta.url), "utf8"),
+    readFile(new URL("../src/popup.css", import.meta.url), "utf8"),
+  ]);
+  const document = new JSDOM(html).window.document;
+
+  assert.equal(document.querySelector(".wordmark").textContent.trim(), "Sidenote");
+  assert.equal(document.querySelector('#new-note-form button[type="submit"]').textContent.trim(), "Save note");
+  assert.match(css, /TwitterChirp/);
+  assert.match(css, /#1d9bf0/i);
+  assert.doesNotMatch(css, /ui-monospace|SFMono|Menlo/);
+});
+
 test("profile editor window prefills the requested handle and existing note", async () => {
   const html = await readFile(new URL("../src/popup.html", import.meta.url), "utf8");
   const document = new JSDOM(html).window.document;
@@ -75,7 +89,7 @@ test("profile editor window prefills the requested handle and existing note", as
   assert.equal(populated, true);
   assert.equal(document.querySelector("#new-handle").value, "ada");
   assert.equal(document.querySelector("#new-text").value, "Compiler expert");
-  assert.equal(document.querySelector("#new-note-form button[type=submit]").textContent, "UPDATE NOTE");
+  assert.equal(document.querySelector("#new-note-form button[type=submit]").textContent, "Update note");
 });
 
 test("profile editor closes its Chromium window after saving", async () => {

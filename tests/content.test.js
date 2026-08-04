@@ -49,6 +49,8 @@ test("profile card keeps note text closed and opens an extension-origin editor",
   assert.equal(root.querySelector("textarea"), null);
   assert.match(root.textContent, /Only you can see this/i);
   assert.match(root.textContent, /Compiler expert/i);
+  assert.equal(root.querySelector("strong").textContent, "Your private note");
+  assert.match(root.querySelector("style").textContent, /TwitterChirp/);
 
   root.querySelector("button").click();
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -93,6 +95,28 @@ test("decorateTweet mounts the note inside X's content column before the action 
   assert.equal(annotation.nextElementSibling.getAttribute("role"), "group");
 });
 
+test("feed note uses compact X-native typography without the terminal-style label", () => {
+  loadMarkup(`
+    <article data-testid="tweet">
+      <div class="tweet-content">
+        <div data-testid="User-Name"><a href="/ada"><span>@ada</span></a></div>
+        <div data-testid="tweetText">hello</div>
+        <div role="group" aria-label="Tweet actions"></div>
+      </div>
+    </article>
+  `);
+  const article = document.querySelector("article");
+
+  ui.decorateTweet(article, { ada: { handle: "ada", text: "Readable note", updatedAt: 1 } });
+
+  const root = ui.shadowRootFor(article.querySelector(".sidenote-feed-note"));
+  const annotation = root.querySelector("aside");
+  assert.match(root.querySelector("style").textContent, /TwitterChirp/);
+  assert.equal(annotation.querySelector("strong").textContent, "Your note");
+  assert.equal(annotation.querySelector("svg").getAttribute("aria-hidden"), "true");
+  assert.doesNotMatch(annotation.textContent, /\/\/|YOUR NOTE|SIDENOTE/);
+});
+
 test("decorateTweet ignores quoted content and keeps thread notes in their own articles", () => {
   loadMarkup(`
     <article data-testid="tweet" id="outer">
@@ -128,8 +152,8 @@ test("decorateTweet ignores quoted content and keeps thread notes in their own a
 
   const outerAnnotation = outer.querySelector(".sidenote-feed-note");
   const replyAnnotation = reply.querySelector(".sidenote-feed-note");
-  assert.equal(outerAnnotation.parentElement.className, "action-wrapper");
-  assert.equal(outerAnnotation.nextElementSibling.getAttribute("aria-label"), "Tweet actions");
+  assert.equal(outerAnnotation.parentElement.className, "tweet-content");
+  assert.equal(outerAnnotation.nextElementSibling.className, "action-wrapper");
   assert.match(ui.shadowRootFor(outerAnnotation).textContent, /outer note/);
   assert.doesNotMatch(ui.shadowRootFor(outerAnnotation).textContent, /quoted note/);
   assert.equal(replyAnnotation.closest("article"), reply);
