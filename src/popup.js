@@ -68,13 +68,28 @@
     URL.revokeObjectURL(url);
   }
 
+  function updateEditorCount(doc) {
+    const text = doc.querySelector("#new-text").value;
+    doc.querySelector("#editor-count").textContent = `${text.length}/${core.MAX_NOTE_LENGTH}`;
+  }
+
+  function enterEditorMode(doc, handle, title = "Add private note") {
+    doc.body.classList.add("editor-mode");
+    doc.querySelector(".wordmark").textContent = title;
+    doc.querySelector("#editor-handle").textContent = `@${handle}`;
+    const label = doc.querySelector("#new-note-form > label");
+    label.textContent = "Private note";
+  }
+
   function prefillRequestedEditor(doc, search, notes) {
     const handle = core.normalizeHandle(new URLSearchParams(search).get("handle"));
     if (!handle) return false;
     const text = notes[handle]?.text ?? "";
+    enterEditorMode(doc, handle, text ? "Edit private note" : "Add private note");
     doc.querySelector("#new-handle").value = handle;
     doc.querySelector("#new-text").value = text;
     doc.querySelector("#new-note-form button[type=submit]").textContent = text ? "Update note" : "Save note";
+    updateEditorCount(doc);
     doc.querySelector("#new-text").focus();
     return true;
   }
@@ -86,8 +101,10 @@
 
   function start() {
     let notes = {};
+    const requestedHandle = core.normalizeHandle(new URLSearchParams(window.location.search).get("handle"));
     const search = document.querySelector("#search");
     const status = document.querySelector("#status");
+    if (requestedHandle) enterEditorMode(document, requestedHandle);
     const update = () => {
       const filtered = core.filterNotes(notes, search.value);
       renderNotes(document, filtered, {
@@ -111,6 +128,10 @@
     });
     storage.subscribe((stored) => { notes = stored; update(); });
     search.addEventListener("input", update);
+    document.querySelector("#new-text").addEventListener("input", () => updateEditorCount(document));
+    document.querySelector("#editor-cancel").addEventListener("click", async () => {
+      if (requestedHandle) await closeEditorWindow(chrome.windows);
+    });
     document.querySelector("#new-note-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget;

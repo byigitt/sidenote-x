@@ -49,8 +49,8 @@ test("editor action validates the handle and opens an extension-origin window", 
   assert.deepEqual(windows, [{
     url: "chrome-extension://id/src/popup.html?handle=ada",
     type: "popup",
-    width: 430,
-    height: 680,
+    width: 520,
+    height: 470,
     focused: true,
   }]);
 });

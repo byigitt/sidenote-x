@@ -8,7 +8,12 @@
 </head>
 <body>
   <header>
-    <div class="wordmark">Sidenote</div>
+    <div class="brand">
+      <span class="editor-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.75 3.75h10.5a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2H6.75a2 2 0 0 1-2-2V5.75a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      </span>
+      <div><div class="wordmark">Sidenote</div><span id="editor-handle" class="editor-handle"></span></div>
+    </div>
     <span id="note-total" class="total">0 notes</span>
   </header>
   <main>
@@ -22,7 +27,11 @@
       <div class="handle-field"><span>@</span><input id="new-handle" name="handle" maxlength="15" pattern="[A-Za-z0-9_]{1,15}" placeholder="handle" required></div>
       <label class="sr-only" for="new-text">Private note</label>
       <textarea id="new-text" name="text" maxlength="280" placeholder="What should future-you remember?" required></textarea>
-      <button type="submit">Save note</button>
+      <div class="editor-meta"><span>Only you can see this</span><span id="editor-count" aria-live="polite" aria-atomic="true">0/280</span></div>
+      <div class="form-actions">
+        <button id="editor-cancel" class="editor-cancel" type="button">Cancel</button>
+        <button type="submit">Save note</button>
+      </div>
     </form>
 
     <div class="toolbar">

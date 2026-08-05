@@ -63,6 +63,33 @@ try {
   );
   await popup.screenshot({ path: path.join(evidenceDir, "after-popup.png"), fullPage: true });
   await popup.close();
+
+  const editorMarkup = popupHtml
+    .replace('<link rel="stylesheet" href="popup.css">', `<style>${popupCss}</style>`)
+    .replace(/<script[^>]*><\/script>/g, "");
+  const editor = await browser.newPage({ viewport: { width: 520, height: 470 }, colorScheme: "dark" });
+  await editor.route("https://extension.test/src/popup.html?handle=ada", (route) => route.fulfill({
+    status: 200,
+    contentType: "text/html",
+    body: editorMarkup,
+  }));
+  await editor.goto("https://extension.test/src/popup.html?handle=ada");
+  await editor.addScriptTag({ path: path.join(root, "src/core.js") });
+  await editor.evaluate((text) => {
+    globalThis.SidenoteStorage = {
+      getAll: async () => ({ ada: { handle: "ada", text, updatedAt: Date.now() } }),
+      subscribe: () => () => {},
+      save: async () => {},
+      remove: async () => {},
+      clear: async () => {},
+      exportNotes: async () => ({}),
+      importNotes: async () => 0,
+    };
+  }, noteText);
+  await editor.addScriptTag({ path: path.join(root, "src/popup.js") });
+  await editor.locator("body.editor-mode").waitFor();
+  await editor.screenshot({ path: path.join(evidenceDir, "after-editor.png"), fullPage: true });
+  await editor.close();
   console.log(`Visual evidence written to ${evidenceDir}`);
 } finally {
   await browser.close();

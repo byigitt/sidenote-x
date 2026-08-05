@@ -26,8 +26,10 @@ header, footer {
 }
 
 header { border-bottom: 1px solid #2f3336; }
+.brand { display: flex; align-items: center; gap: 12px; }
 .wordmark { font-size: 20px; font-weight: 700; line-height: 24px; }
 .total { color: #71767b; font-size: 13px; }
+.editor-icon, .editor-handle, .editor-meta, .editor-cancel { display: none; }
 
 main { padding: 16px; }
 .intro { padding: 2px 0 16px; }
@@ -61,7 +63,8 @@ textarea { width: 100%; resize: vertical; line-height: 19px; }
 .new-note textarea { min-height: 58px; padding: 2px 0; font-size: 14px; }
 ::placeholder { color: #71767b; opacity: 1; }
 
-.new-note button, .note-card button[data-action="save"] {
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.new-note button[type="submit"], .note-card button[data-action="save"] {
   justify-self: end;
   min-height: 36px;
   padding: 0 17px;
@@ -73,7 +76,7 @@ textarea { width: 100%; resize: vertical; line-height: 19px; }
   font-weight: 700;
 }
 
-.new-note button:hover, .note-card button[data-action="save"]:hover { background: #1a8cd8; }
+.new-note button[type="submit"]:hover, .note-card button[data-action="save"]:hover { background: #1a8cd8; }
 
 .toolbar { display: flex; gap: 8px; align-items: center; margin: 16px 0 8px; }
 .search {
@@ -167,3 +170,90 @@ footer button {
 footer button:hover { color: #f4212e; background: rgba(244, 33, 46, .1); }
 
 :focus-visible { outline: 2px solid #1d9bf0; outline-offset: 2px; }
+
+body.editor-mode {
+  width: 480px;
+  min-height: 0;
+}
+
+body.editor-mode header {
+  justify-content: flex-start;
+  padding: 20px 20px 18px;
+  border-bottom: 0;
+}
+
+body.editor-mode .editor-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #1d9bf0;
+  background: #16181c;
+  border-radius: 9999px;
+}
+
+body.editor-mode .editor-icon svg { width: 20px; height: 20px; }
+body.editor-mode .editor-handle { display: block; color: #71767b; font-size: 14px; line-height: 18px; }
+body.editor-mode .total,
+body.editor-mode .intro,
+body.editor-mode .toolbar,
+body.editor-mode #status,
+body.editor-mode .note-list,
+body.editor-mode footer { display: none; }
+
+body.editor-mode main { padding: 0 20px 20px; }
+body.editor-mode .new-note {
+  gap: 10px;
+  padding: 0;
+  background: #000;
+  border: 0;
+  border-radius: 0;
+}
+
+body.editor-mode .new-note > label {
+  color: #71767b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.editor-mode .handle-field { display: none; }
+body.editor-mode textarea {
+  min-height: 124px;
+  padding: 14px;
+  color: #e7e9ea;
+  background: #16181c;
+  border: 1px solid #536471;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 21px;
+  resize: none;
+}
+
+body.editor-mode textarea:focus {
+  border-color: #1d9bf0;
+  box-shadow: 0 0 0 1px #1d9bf0;
+}
+
+body.editor-mode .editor-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #71767b;
+  font-size: 12px;
+}
+
+body.editor-mode .form-actions { margin-top: 6px; }
+body.editor-mode .editor-cancel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 18px;
+  color: #e7e9ea;
+  background: #16181c;
+  border: 1px solid #536471;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+body.editor-mode .editor-cancel:hover { background: #202327; }
+body.editor-mode .new-note button[type="submit"] { min-height: 38px; padding-inline: 18px; }

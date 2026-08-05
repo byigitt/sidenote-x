@@ -76,8 +76,11 @@ test("popup uses X-native typography and controls instead of terminal styling", 
   assert.doesNotMatch(css, /ui-monospace|SFMono|Menlo/);
 });
 
-test("profile editor window prefills the requested handle and existing note", async () => {
-  const html = await readFile(new URL("../src/popup.html", import.meta.url), "utf8");
+test("profile editor uses the compact X-native modal layout and prefills the requested note", async () => {
+  const [html, css] = await Promise.all([
+    readFile(new URL("../src/popup.html", import.meta.url), "utf8"),
+    readFile(new URL("../src/popup.css", import.meta.url), "utf8"),
+  ]);
   const document = new JSDOM(html).window.document;
 
   const populated = globalThis.SidenotePopup.prefillRequestedEditor(
@@ -87,9 +90,31 @@ test("profile editor window prefills the requested handle and existing note", as
   );
 
   assert.equal(populated, true);
+  assert.equal(document.body.classList.contains("editor-mode"), true);
+  assert.equal(document.querySelector(".wordmark").textContent, "Edit private note");
+  assert.equal(document.querySelector("#editor-handle").textContent, "@ada");
+  assert.equal(document.querySelector("#new-note-form > label").textContent, "Private note");
   assert.equal(document.querySelector("#new-handle").value, "ada");
   assert.equal(document.querySelector("#new-text").value, "Compiler expert");
+  assert.equal(document.querySelector("#editor-count").textContent, "15/280");
+  assert.equal(document.querySelector("#editor-count").getAttribute("aria-live"), "polite");
+  assert.equal(document.querySelector("#editor-count").getAttribute("aria-atomic"), "true");
+  assert.equal(document.querySelector("#editor-cancel").type, "button");
   assert.equal(document.querySelector("#new-note-form button[type=submit]").textContent, "Update note");
+  assert.match(css, /body\.editor-mode/);
+  assert.match(css, /body\.editor-mode\s+textarea[^}]*min-height:\s*124px/s);
+  assert.match(css, /body\.editor-mode\s+\.new-note[^}]*background:\s*#000/s);
+});
+
+test("profile editor labels a new profile note as Add private note", async () => {
+  const html = await readFile(new URL("../src/popup.html", import.meta.url), "utf8");
+  const document = new JSDOM(html).window.document;
+
+  globalThis.SidenotePopup.prefillRequestedEditor(document, "?handle=Grace", {});
+
+  assert.equal(document.querySelector(".wordmark").textContent, "Add private note");
+  assert.equal(document.querySelector("#editor-handle").textContent, "@grace");
+  assert.equal(document.querySelector("#new-note-form button[type=submit]").textContent, "Save note");
 });
 
 test("profile editor closes its Chromium window after saving", async () => {

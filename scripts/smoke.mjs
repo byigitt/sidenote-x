@@ -106,8 +106,24 @@ try {
   const editor = await editorPromise;
   await editor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
   assert(await editor.locator("#new-handle").inputValue() === "ada", "Editor did not prefill the profile handle.");
+  const editorLayout = await editor.evaluate(() => {
+    const body = document.body.getBoundingClientRect();
+    const textarea = document.querySelector("#new-text").getBoundingClientRect();
+    return {
+      editorMode: document.body.classList.contains("editor-mode"),
+      title: document.querySelector(".wordmark").textContent,
+      handle: document.querySelector("#editor-handle").textContent,
+      privacy: document.querySelector(".editor-meta").textContent,
+      textareaHeight: textarea.height,
+      overflow: Math.max(0, body.width - innerWidth, document.documentElement.scrollHeight - innerHeight),
+    };
+  });
+  assert(editorLayout.editorMode && editorLayout.title === "Add private note", "Profile editor did not enter its X-native add-note mode.");
+  assert(editorLayout.handle === "@ada" && editorLayout.privacy.includes("Only you can see this"), "Editor identity or privacy cue was missing.");
+  assert(editorLayout.textareaHeight >= 124 && editorLayout.overflow <= 0, "Editor modal clipped or overflowed its Chromium window.");
   await editor.locator("#new-text").click();
   await editor.keyboard.type(noteText);
+  assert(await editor.locator("#editor-count").textContent() === `${noteText.length}/280`, "Editor character count did not update while typing.");
   const editorErrors = [];
   editor.on("pageerror", (error) => editorErrors.push(error.message));
   editor.on("console", (message) => {
@@ -153,6 +169,8 @@ try {
   const editEditor = await editEditorPromise;
   await editEditor.waitForURL(new RegExp(`^chrome-extension://${extensionId}/src/popup\\.html\\?handle=ada$`));
   assert(await editEditor.locator("#new-text").inputValue() === noteText, "Edit window did not prefill the existing note.");
+  assert(await editEditor.locator(".wordmark").textContent() === "Edit private note", "Existing note did not open in X-native edit mode.");
+  assert(await editEditor.locator("#editor-count").textContent() === `${noteText.length}/280`, "Edit window character count did not match the existing note.");
   await editEditor.locator("#new-text").click();
   await editEditor.keyboard.press(process.platform === "darwin" ? "Meta+A" : "Control+A");
   await editEditor.keyboard.type(updatedNoteText);

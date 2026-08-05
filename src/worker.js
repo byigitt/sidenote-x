@@ -21,8 +21,8 @@
       await createWindow({
         url: getURL(`src/popup.html?handle=${encodeURIComponent(handle)}`),
         type: "popup",
-        width: 430,
-        height: 680,
+        width: 520,
+        height: 470,
         focused: true,
       });
       return { opened: true };
