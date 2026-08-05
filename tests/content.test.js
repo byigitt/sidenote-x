@@ -51,6 +51,7 @@ test("profile card keeps note text closed and opens an extension-origin editor",
   assert.match(root.textContent, /Compiler expert/i);
   assert.equal(root.querySelector("strong").textContent, "Your private note");
   assert.match(root.querySelector("style").textContent, /TwitterChirp/);
+  assert.match(root.querySelector("style").textContent, /section\s*\{[^}]*padding:\s*16px;/s);
 
   root.querySelector("button").click();
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -114,6 +115,7 @@ test("feed note uses compact X-native typography without the terminal-style labe
   assert.match(root.querySelector("style").textContent, /TwitterChirp/);
   assert.equal(annotation.querySelector("strong").textContent, "Your note");
   assert.equal(annotation.querySelector("svg").getAttribute("aria-hidden"), "true");
+  assert.match(root.querySelector("style").textContent, /aside\s*\{[^}]*padding:\s*12px 14px;/s);
   assert.doesNotMatch(annotation.textContent, /\/\/|YOUR NOTE|SIDENOTE/);
 });
 

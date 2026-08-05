@@ -3,7 +3,7 @@
   "minimum_chrome_version": "102",
   "name": "Sidenote for X",
   "short_name": "Sidenote",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Leave private, local notes on X profiles and see them in your feed.",
   "permissions": ["storage"],
   "host_permissions": ["https://x.com/*", "https://twitter.com/*"],
